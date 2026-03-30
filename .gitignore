@@ -1,0 +1,10 @@
+# AWS deployment artifacts
+aws/function.zip
+
+# IDE
+.claude/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

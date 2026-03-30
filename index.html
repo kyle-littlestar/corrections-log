@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f0f1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<title>Corrections &amp; Solutions</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f1a;
+    --surface: #1a1a2e;
+    --surface2: #222238;
+    --border: #2e2e48;
+    --gold: #d4a843;
+    --gold-hover: #e0b84f;
+    --gold-dim: #a07e30;
+    --text: #e0e0e0;
+    --text-dim: #8888a0;
+    --text-bright: #ffffff;
+    --green: #34d399;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --blue: #60a5fa;
+    --radius: 8px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 100dvh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    padding: calc(12px + var(--safe-top)) 16px 10px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .brand h1 {
+    font-family: var(--font-mono); font-size: 1.05rem; font-weight: 700;
+    color: var(--gold); letter-spacing: 0.5px; white-space: nowrap;
+  }
+  .brand p { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-dim); letter-spacing: 0.3px; }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .badge {
+    font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim);
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 20px; white-space: nowrap;
+  }
+  .btn-pdf {
+    font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700;
+    color: var(--bg); background: var(--gold); border: none;
+    padding: 5px 12px; border-radius: 6px; cursor: pointer;
+    letter-spacing: 0.3px;
+  }
+  .btn-pdf:active { background: var(--gold-hover); }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: calc(56px + var(--safe-top)); z-index: 49;
+  }
+  .tab {
+    flex: 1; text-align: center; padding: 12px 8px;
+    font-family: var(--font-mono); font-size: 0.78rem; font-weight: 600;
+    color: var(--text-dim); background: none; border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* ── Content ── */
+  .content { max-width: 800px; margin: 0 auto; padding: 16px; padding-bottom: calc(24px + var(--safe-bottom)); }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── Form ── */
+  label {
+    display: block; font-family: var(--font-mono); font-size: 0.7rem;
+    font-weight: 700; color: var(--gold-dim); letter-spacing: 0.8px;
+    text-transform: uppercase; margin-bottom: 6px; margin-top: 18px;
+  }
+  label:first-child { margin-top: 0; }
+
+  input, textarea, select {
+    width: 100%; padding: 12px 14px;
+    background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 16px; font-family: inherit;
+    transition: border-color 0.15s;
+    -webkit-appearance: none; appearance: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none; border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(212,168,67,0.15);
+  }
+  textarea { resize: vertical; min-height: 100px; }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888a0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+  input::placeholder, textarea::placeholder { color: var(--text-dim); opacity: 0.6; }
+
+  /* Severity pills */
+  .severity-pills { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .sev-pill {
+    text-align: center; padding: 10px 8px;
+    font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600;
+    background: var(--surface2); color: var(--text-dim);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .sev-pill input { position: absolute; opacity: 0; pointer-events: none; }
+  .sev-pill.selected-low { border-color: var(--green); color: var(--green); background: rgba(52,211,153,0.08); }
+  .sev-pill.selected-moderate { border-color: var(--amber); color: var(--amber); background: rgba(251,191,36,0.08); }
+  .sev-pill.selected-high { border-color: var(--red); color: var(--red); background: rgba(248,113,113,0.08); }
+
+  .btn-submit {
+    width: 100%; margin-top: 24px; padding: 14px;
+    font-family: var(--font-mono); font-size: 0.88rem; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    background: var(--gold); color: var(--bg); border: none;
+    border-radius: var(--radius); cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-submit:active { background: var(--gold-hover); }
+
+  /* ── Log View ── */
+  .filter-bar {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+  }
+  .filter-bar input, .filter-bar select {
+    flex: 1; min-width: 100px; padding: 10px 12px; font-size: 0.85rem;
+  }
+  .filter-bar select { min-width: 120px; flex: 0 1 auto; }
+
+  .entry-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px;
+    margin-bottom: 12px; border-left: 3px solid var(--gold);
+    transition: border-color 0.15s;
+  }
+  .entry-card.sev-low { border-left-color: var(--green); }
+  .entry-card.sev-moderate { border-left-color: var(--amber); }
+  .entry-card.sev-high { border-left-color: var(--red); }
+  .entry-card.status-resolved { opacity: 0.65; }
+
+  .entry-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .entry-title { font-weight: 700; font-size: 0.95rem; color: var(--text-bright); flex: 1; }
+  .entry-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+
+  .badge-sm {
+    font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px; text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .badge-open { background: rgba(96,165,250,0.15); color: var(--blue); }
+  .badge-in-progress { background: rgba(251,191,36,0.15); color: var(--amber); }
+  .badge-resolved { background: rgba(52,211,153,0.15); color: var(--green); }
+  .badge-closed { background: rgba(136,136,160,0.15); color: var(--text-dim); }
+  .badge-sev-low { background: rgba(52,211,153,0.12); color: var(--green); }
+  .badge-sev-moderate { background: rgba(251,191,36,0.12); color: var(--amber); }
+  .badge-sev-high { background: rgba(248,113,113,0.12); color: var(--red); }
+
+  .entry-meta { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 6px; }
+  .entry-desc { font-size: 0.85rem; color: var(--text); white-space: pre-wrap; margin-bottom: 6px; }
+  .entry-section-label { font-family: var(--font-mono); font-size: 0.68rem; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; }
+  .entry-section-text { font-size: 0.83rem; color: var(--text); white-space: pre-wrap; }
+
+  .entry-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .btn-sm {
+    font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600;
+    padding: 5px 10px; border-radius: 5px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text-dim); cursor: pointer;
+    letter-spacing: 0.3px;
+  }
+  .btn-sm:active { background: var(--border); }
+  .btn-sm.danger { border-color: rgba(248,113,113,0.3); color: var(--red); }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--text-dim); font-size: 0.9rem;
+  }
+
+  /* ── Stats View ── */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; text-align: center;
+  }
+  .stat-number { font-family: var(--font-mono); font-size: 2rem; font-weight: 800; color: var(--gold); }
+  .stat-label { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+  .stat-card.green .stat-number { color: var(--green); }
+  .stat-card.amber .stat-number { color: var(--amber); }
+  .stat-card.red .stat-number { color: var(--red); }
+  .stat-card.blue .stat-number { color: var(--blue); }
+
+  .stats-section { margin-top: 20px; }
+  .stats-section h3 {
+    font-family: var(--font-mono); font-size: 0.75rem; color: var(--gold-dim);
+    text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
+  }
+  .stats-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .stats-bar-label { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); min-width: 100px; }
+  .stats-bar-track { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .stats-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .stats-bar-count { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); min-width: 24px; text-align: right; }
+
+  .weekly-export-section {
+    margin-top: 24px; padding: 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .weekly-export-section h3 {
+    font-family: var(--font-mono); font-size: 0.75rem; color: var(--gold-dim);
+    text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
+  }
+  .week-picker { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .week-picker input { flex: 1; min-width: 140px; }
+  .btn-gold {
+    font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;
+    padding: 10px 16px; border-radius: 6px; border: none;
+    background: var(--gold); color: var(--bg); cursor: pointer;
+    letter-spacing: 0.3px; white-space: nowrap;
+  }
+  .btn-gold:active { background: var(--gold-hover); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 100;
+    justify-content: center; align-items: center; padding: 20px;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px; max-width: 360px; width: 100%;
+  }
+  .modal h3 { font-size: 1rem; color: var(--text-bright); margin-bottom: 8px; }
+  .modal p { color: var(--text-dim); font-size: 0.88rem; margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal-actions .btn-sm { padding: 8px 14px; }
+
+  /* ── PDF Menu Dropdown ── */
+  .pdf-menu-wrap { position: relative; }
+  .pdf-menu {
+    display: none; position: absolute; top: 100%; right: 0; margin-top: 6px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); min-width: 200px; z-index: 60;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .pdf-menu.open { display: block; }
+  .pdf-menu button {
+    display: block; width: 100%; text-align: left;
+    font-family: var(--font-mono); font-size: 0.75rem;
+    padding: 10px 14px; background: none; border: none;
+    color: var(--text); cursor: pointer;
+  }
+  .pdf-menu button:hover, .pdf-menu button:focus { background: var(--surface2); }
+  .pdf-menu button + button { border-top: 1px solid var(--border); }
+
+  /* ── Responsive ── */
+  @media (max-width: 500px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .filter-bar { flex-direction: column; }
+    .filter-bar input, .filter-bar select { min-width: unset; flex: unset; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="brand">
+    <h1>CORRECTIONS &amp; SOLUTIONS</h1>
+    <p>Workplace Issue Tracker</p>
+  </div>
+  <div class="header-actions">
+    <span class="badge" id="entryCount">0 entries</span>
+    <div class="pdf-menu-wrap">
+      <button class="btn-pdf" onclick="togglePdfMenu()">&#8681; PDF</button>
+      <div class="pdf-menu" id="pdfMenu">
+        <button onclick="exportAllPDF(); closePdfMenu();">Export All Entries</button>
+        <button onclick="showWeeklyExport(); closePdfMenu();">Weekly Summary</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Tabs -->
+<nav class="tabs">
+  <button class="tab active" onclick="showTab('new')" id="tabNew">+ New</button>
+  <button class="tab" onclick="showTab('log')" id="tabLog">Log</button>
+  <button class="tab" onclick="showTab('stats')" id="tabStats">Stats</button>
+</nav>
+
+<div class="content">
+
+  <!-- ====== NEW ENTRY TAB ====== -->
+  <div class="view active" id="viewNew">
+    <form id="entryForm" onsubmit="saveEntry(event)">
+      <input type="hidden" id="editId" value="">
+
+      <label>Date &amp; Time</label>
+      <input type="datetime-local" id="entryDatetime" required>
+
+      <label>Issue Title</label>
+      <input type="text" id="entryTitle" placeholder="Brief description of the issue" required>
+
+      <label>Category</label>
+      <select id="entryCategory" required>
+        <option value="" disabled selected>Select category...</option>
+        <option>Equipment / Machinery</option>
+        <option>Safety / PPE</option>
+        <option>Process / Procedure</option>
+        <option>Quality Control</option>
+        <option>Documentation</option>
+        <option>Training</option>
+        <option>Communication</option>
+        <option>Housekeeping</option>
+        <option>Environmental</option>
+        <option>Behavioral</option>
+        <option>Other</option>
+      </select>
+
+      <label>Severity</label>
+      <div class="severity-pills" id="severityPills">
+        <label class="sev-pill" onclick="selectSeverity(this,'low')">
+          <input type="radio" name="severity" value="low"> Low
+        </label>
+        <label class="sev-pill" onclick="selectSeverity(this,'moderate')">
+          <input type="radio" name="severity" value="moderate"> Moderate
+        </label>
+        <label class="sev-pill" onclick="selectSeverity(this,'high')">
+          <input type="radio" name="severity" value="high"> High
+        </label>
+      </div>
+
+      <label>Issue Observed</label>
+      <textarea id="entryIssue" placeholder="What was the problem or situation?" required></textarea>
+
+      <label>Correction Applied</label>
+      <textarea id="entryCorrection" placeholder="What was done to fix the issue?"></textarea>
+
+      <label>Preventive Solution</label>
+      <textarea id="entryPreventive" placeholder="What steps will prevent recurrence?"></textarea>
+
+      <label>Responsible / Involved</label>
+      <input type="text" id="entryResponsible" placeholder="Team member name(s)">
+
+      <label>Status</label>
+      <select id="entryStatus">
+        <option value="open">Open</option>
+        <option value="in-progress">In Progress</option>
+        <option value="resolved" selected>Resolved</option>
+        <option value="closed">Closed</option>
+      </select>
+
+      <button type="submit" class="btn-submit" id="submitBtn">Log Entry</button>
+    </form>
+  </div>
+
+  <!-- ====== LOG TAB ====== -->
+  <div class="view" id="viewLog">
+    <div class="filter-bar">
+      <input type="text" id="searchInput" placeholder="Search..." oninput="renderLog()">
+      <select id="filterStatus" onchange="renderLog()">
+        <option value="">All Status</option>
+        <option value="open">Open</option>
+        <option value="in-progress">In Progress</option>
+        <option value="resolved">Resolved</option>
+        <option value="closed">Closed</option>
+      </select>
+      <select id="filterSeverity" onchange="renderLog()">
+        <option value="">All Severity</option>
+        <option value="low">Low</option>
+        <option value="moderate">Moderate</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+    <div id="logList"></div>
+  </div>
+
+  <!-- ====== STATS TAB ====== -->
+  <div class="view" id="viewStats">
+    <div class="stats-grid" id="statsGrid"></div>
+    <div id="statsBreakdown"></div>
+    <div class="weekly-export-section" id="weeklyExportSection" style="display:none;">
+      <h3>Weekly Summary PDF</h3>
+      <div class="week-picker">
+        <input type="date" id="weekStart" title="Week start date">
+        <span style="color:var(--text-dim);font-size:0.8rem;">to</span>
+        <input type="date" id="weekEnd" title="Week end date">
+      </div>
+      <button class="btn-gold" onclick="exportWeeklyPDF()">Generate Weekly PDF</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <h3>Delete Entry</h3>
+    <p>Permanently remove this correction log entry?</p>
+    <div class="modal-actions">
+      <button class="btn-sm" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-sm danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ──
+const API_BASE = 'https://nw06vrpvsl.execute-api.us-east-1.amazonaws.com';
+const STORAGE_KEY = 'corrections_log';
+let _cached = null;
+let _apiOk = !!API_BASE;
+
+// ── Storage ──
+function getEntries() {
+  if (_cached) return _cached;
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+function setEntriesLocal(data) {
+  _cached = data;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  updateCount();
+}
+function generateId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+// ── API helpers ──
+async function apiFetch(path, opts = {}) {
+  const r = await fetch(`${API_BASE}${path}`, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  if (!r.ok) throw new Error(`API ${r.status}`);
+  return r.json();
+}
+async function apiSync() {
+  if (!_apiOk) return;
+  try {
+    const items = await apiFetch('/entries');
+    setEntriesLocal(items);
+    renderLog(); renderStats();
+  } catch (e) { console.warn('API sync failed:', e); _apiOk = false; }
+}
+async function apiCreate(entry) {
+  if (!_apiOk) return;
+  try { await apiFetch('/entries', { method: 'POST', body: JSON.stringify(entry) }); } catch(e) { console.warn(e); }
+}
+async function apiUpdate(id, data) {
+  if (!_apiOk) return;
+  try { await apiFetch(`/entries/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }); } catch(e) { console.warn(e); }
+}
+async function apiDelete(id) {
+  if (!_apiOk) return;
+  try { await apiFetch(`/entries/${encodeURIComponent(id)}`, { method: 'DELETE' }); } catch(e) { console.warn(e); }
+}
+
+// ── Tabs ──
+function showTab(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+  document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+  if (name === 'log') renderLog();
+  if (name === 'stats') renderStats();
+}
+
+// ── Severity pills ──
+function selectSeverity(pill, val) {
+  document.querySelectorAll('.sev-pill').forEach(p => p.className = 'sev-pill');
+  pill.classList.add('selected-' + val);
+  pill.querySelector('input').checked = true;
+}
+
+// ── PDF menu ──
+function togglePdfMenu() { document.getElementById('pdfMenu').classList.toggle('open'); }
+function closePdfMenu() { document.getElementById('pdfMenu').classList.remove('open'); }
+document.addEventListener('click', e => {
+  if (!e.target.closest('.pdf-menu-wrap')) closePdfMenu();
+});
+
+function showWeeklyExport() {
+  showTab('stats');
+  const sec = document.getElementById('weeklyExportSection');
+  sec.style.display = 'block';
+  // Default to current week (Mon-Sun)
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const mon = new Date(now);
+  mon.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate() + 6);
+  document.getElementById('weekStart').value = dateStr(mon);
+  document.getElementById('weekEnd').value = dateStr(sun);
+}
+
+// ── Count badge ──
+function updateCount() {
+  const n = getEntries().length;
+  document.getElementById('entryCount').textContent = n + (n === 1 ? ' entry' : ' entries');
+}
+
+// ── Save / Edit ──
+function saveEntry(e) {
+  e.preventDefault();
+  const sevEl = document.querySelector('input[name="severity"]:checked');
+  if (!sevEl) { alert('Please select a severity level.'); return; }
+
+  const editId = document.getElementById('editId').value;
+  const entry = {
+    id: editId || generateId(),
+    datetime: document.getElementById('entryDatetime').value,
+    title: document.getElementById('entryTitle').value.trim(),
+    category: document.getElementById('entryCategory').value,
+    severity: sevEl.value,
+    issue: document.getElementById('entryIssue').value.trim(),
+    correction: document.getElementById('entryCorrection').value.trim(),
+    preventive: document.getElementById('entryPreventive').value.trim(),
+    responsible: document.getElementById('entryResponsible').value.trim(),
+    status: document.getElementById('entryStatus').value,
+    createdAt: editId ? undefined : new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const entries = getEntries();
+  if (editId) {
+    const idx = entries.findIndex(x => x.id === editId);
+    if (idx !== -1) { entry.createdAt = entries[idx].createdAt; entries[idx] = entry; }
+    setEntriesLocal(entries);
+    apiUpdate(editId, entry);
+  } else {
+    entries.unshift(entry);
+    setEntriesLocal(entries);
+    apiCreate(entry);
+  }
+  resetForm();
+  showTab('log');
+}
+
+function resetForm() {
+  document.getElementById('entryForm').reset();
+  document.getElementById('editId').value = '';
+  document.getElementById('submitBtn').textContent = 'Log Entry';
+  document.querySelectorAll('.sev-pill').forEach(p => p.className = 'sev-pill');
+  // Set datetime to now
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('entryDatetime').value = now.toISOString().slice(0, 16);
+  document.getElementById('entryStatus').value = 'resolved';
+}
+
+function editEntry(id) {
+  const e = getEntries().find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('editId').value = e.id;
+  document.getElementById('entryDatetime').value = e.datetime;
+  document.getElementById('entryTitle').value = e.title;
+  document.getElementById('entryCategory').value = e.category;
+  document.getElementById('entryIssue').value = e.issue;
+  document.getElementById('entryCorrection').value = e.correction || '';
+  document.getElementById('entryPreventive').value = e.preventive || '';
+  document.getElementById('entryResponsible').value = e.responsible || '';
+  document.getElementById('entryStatus').value = e.status || 'open';
+  // Set severity pill
+  const pill = document.querySelector(`.sev-pill input[value="${e.severity}"]`);
+  if (pill) selectSeverity(pill.parentElement, e.severity);
+  document.getElementById('submitBtn').textContent = 'Update Entry';
+  showTab('new');
+}
+
+// ── Delete ──
+let _deleteId = null;
+function deleteEntry(id) { _deleteId = id; document.getElementById('deleteModal').classList.add('active'); }
+function closeDeleteModal() { _deleteId = null; document.getElementById('deleteModal').classList.remove('active'); }
+function confirmDelete() {
+  if (!_deleteId) return;
+  const id = _deleteId;
+  setEntriesLocal(getEntries().filter(x => x.id !== id));
+  apiDelete(id);
+  closeDeleteModal();
+  renderLog();
+}
+
+// ── Render Log ──
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function formatDatetime(dt) {
+  if (!dt) return '';
+  const d = new Date(dt);
+  return d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) +
+    ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderLog() {
+  const container = document.getElementById('logList');
+  const search = (document.getElementById('searchInput').value || '').toLowerCase();
+  const fStatus = document.getElementById('filterStatus').value;
+  const fSev = document.getElementById('filterSeverity').value;
+
+  let entries = getEntries();
+  if (search) entries = entries.filter(e =>
+    (e.title || '').toLowerCase().includes(search) ||
+    (e.issue || '').toLowerCase().includes(search) ||
+    (e.responsible || '').toLowerCase().includes(search) ||
+    (e.category || '').toLowerCase().includes(search) ||
+    (e.correction || '').toLowerCase().includes(search)
+  );
+  if (fStatus) entries = entries.filter(e => e.status === fStatus);
+  if (fSev) entries = entries.filter(e => e.severity === fSev);
+
+  // Sort newest first
+  entries.sort((a, b) => (b.datetime || '').localeCompare(a.datetime || ''));
+
+  if (!entries.length) {
+    container.innerHTML = `<div class="empty-state">${search || fStatus || fSev ? 'No entries match filters.' : 'No entries yet. Tap <strong>+ New</strong> to log one.'}</div>`;
+    return;
+  }
+
+  container.innerHTML = entries.map(e => {
+    const status = e.status || 'open';
+    const statusLabel = status === 'in-progress' ? 'In Progress' : status.charAt(0).toUpperCase() + status.slice(1);
+    return `<div class="entry-card sev-${e.severity} ${status === 'resolved' || status === 'closed' ? 'status-resolved' : ''}">
+      <div class="entry-header">
+        <span class="entry-title">${escapeHtml(e.title)}</span>
+        <div class="entry-badges">
+          <span class="badge-sm badge-${status}">${statusLabel}</span>
+          <span class="badge-sm badge-sev-${e.severity}">${e.severity}</span>
+        </div>
+      </div>
+      <div class="entry-meta">${formatDatetime(e.datetime)}${e.category ? ' &middot; ' + escapeHtml(e.category) : ''}${e.responsible ? ' &middot; ' + escapeHtml(e.responsible) : ''}</div>
+      <div class="entry-desc">${escapeHtml(e.issue)}</div>
+      ${e.correction ? `<div class="entry-section-label">Correction Applied</div><div class="entry-section-text">${escapeHtml(e.correction)}</div>` : ''}
+      ${e.preventive ? `<div class="entry-section-label">Preventive Solution</div><div class="entry-section-text">${escapeHtml(e.preventive)}</div>` : ''}
+      <div class="entry-actions">
+        <button class="btn-sm" onclick="editEntry('${e.id}')">Edit</button>
+        <button class="btn-sm" onclick="exportEntryPDF('${e.id}')">PDF</button>
+        <button class="btn-sm danger" onclick="deleteEntry('${e.id}')">Delete</button>
+        ${status !== 'resolved' ? `<button class="btn-sm" onclick="quickStatus('${e.id}','resolved')" style="color:var(--green);border-color:rgba(52,211,153,0.3);">&rarr; Resolve</button>` : ''}
+        ${status !== 'closed' && status === 'resolved' ? `<button class="btn-sm" onclick="quickStatus('${e.id}','closed')">&rarr; Close</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function quickStatus(id, newStatus) {
+  const entries = getEntries();
+  const e = entries.find(x => x.id === id);
+  if (!e) return;
+  e.status = newStatus;
+  e.updatedAt = new Date().toISOString();
+  setEntriesLocal(entries);
+  apiUpdate(id, { status: newStatus });
+  renderLog();
+}
+
+// ── Render Stats ──
+function renderStats() {
+  const entries = getEntries();
+  const total = entries.length;
+  const byStatus = { open: 0, 'in-progress': 0, resolved: 0, closed: 0 };
+  const bySev = { low: 0, moderate: 0, high: 0 };
+  const byCat = {};
+
+  entries.forEach(e => {
+    byStatus[e.status || 'open']++;
+    bySev[e.severity || 'low']++;
+    const cat = e.category || 'Other';
+    byCat[cat] = (byCat[cat] || 0) + 1;
+  });
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-number">${total}</div><div class="stat-label">Total</div></div>
+    <div class="stat-card blue"><div class="stat-number">${byStatus.open}</div><div class="stat-label">Open</div></div>
+    <div class="stat-card amber"><div class="stat-number">${byStatus['in-progress']}</div><div class="stat-label">In Progress</div></div>
+    <div class="stat-card green"><div class="stat-number">${byStatus.resolved}</div><div class="stat-label">Resolved</div></div>
+    <div class="stat-card red"><div class="stat-number">${bySev.high}</div><div class="stat-label">High Sev</div></div>
+    <div class="stat-card"><div class="stat-number">${byStatus.closed}</div><div class="stat-label">Closed</div></div>
+  `;
+
+  // Category breakdown
+  const catEntries = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+  const maxCat = catEntries.length ? catEntries[0][1] : 1;
+
+  let breakdownHtml = '<div class="stats-section"><h3>By Category</h3>';
+  catEntries.forEach(([cat, count]) => {
+    const pct = Math.round((count / maxCat) * 100);
+    breakdownHtml += `<div class="stats-bar-row">
+      <span class="stats-bar-label">${escapeHtml(cat)}</span>
+      <div class="stats-bar-track"><div class="stats-bar-fill" style="width:${pct}%;background:var(--gold);"></div></div>
+      <span class="stats-bar-count">${count}</span>
+    </div>`;
+  });
+  breakdownHtml += '</div>';
+
+  // Severity breakdown
+  breakdownHtml += '<div class="stats-section"><h3>By Severity</h3>';
+  const sevMax = Math.max(bySev.low, bySev.moderate, bySev.high, 1);
+  [['Low', bySev.low, '--green'], ['Moderate', bySev.moderate, '--amber'], ['High', bySev.high, '--red']].forEach(([label, count, color]) => {
+    const pct = Math.round((count / sevMax) * 100);
+    breakdownHtml += `<div class="stats-bar-row">
+      <span class="stats-bar-label">${label}</span>
+      <div class="stats-bar-track"><div class="stats-bar-fill" style="width:${pct}%;background:var(${color});"></div></div>
+      <span class="stats-bar-count">${count}</span>
+    </div>`;
+  });
+  breakdownHtml += '</div>';
+
+  document.getElementById('statsBreakdown').innerHTML = breakdownHtml;
+}
+
+// ── PDF Generation ──
+function dateStr(d) { return d.toISOString().slice(0, 10); }
+
+function pdfColors() {
+  return {
+    bg: [15, 15, 26], surface: [26, 26, 46], border: [46, 46, 72],
+    gold: [212, 168, 67], text: [224, 224, 224], dim: [136, 136, 160],
+    green: [52, 211, 153], amber: [251, 191, 36], red: [248, 113, 113], blue: [96, 165, 250],
+  };
+}
+
+function sevColor(sev) {
+  const c = pdfColors();
+  if (sev === 'high') return c.red;
+  if (sev === 'moderate') return c.amber;
+  return c.green;
+}
+
+function statusColor(s) {
+  const c = pdfColors();
+  if (s === 'open') return c.blue;
+  if (s === 'in-progress') return c.amber;
+  if (s === 'resolved') return c.green;
+  return c.dim;
+}
+
+function addPdfHeader(doc, title, subtitle) {
+  const c = pdfColors();
+  const w = doc.internal.pageSize.getWidth();
+  // Header bar
+  doc.setFillColor(...c.surface);
+  doc.rect(0, 0, w, 22, 'F');
+  doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(...c.gold);
+  doc.text('CORRECTIONS & SOLUTIONS', 12, 10);
+  doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...c.dim);
+  doc.text(title, 12, 16);
+  if (subtitle) {
+    doc.setFontSize(6); doc.text(subtitle, 12, 20);
+  }
+  // Divider
+  doc.setDrawColor(...c.gold); doc.setLineWidth(0.5);
+  doc.line(0, 22, w, 22);
+  return 28;
+}
+
+function addPdfEntry(doc, entry, y) {
+  const c = pdfColors();
+  const w = doc.internal.pageSize.getWidth();
+  const margin = 12;
+  const innerW = w - margin * 2;
+
+  // Check if we need a new page
+  if (y > 260) {
+    doc.addPage();
+    doc.setFillColor(...c.bg);
+    doc.rect(0, 0, w, doc.internal.pageSize.getHeight(), 'F');
+    y = 12;
+  }
+
+  // Entry card background
+  const cardStart = y;
+  const sevCol = sevColor(entry.severity);
+
+  // Left accent line
+  doc.setFillColor(...sevCol);
+  doc.rect(margin, y, 2, 6, 'F'); // placeholder height, we'll extend later
+
+  // Title
+  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...c.text);
+  const titleLines = doc.splitTextToSize(entry.title || 'Untitled', innerW - 10);
+  doc.text(titleLines, margin + 6, y + 4);
+  y += titleLines.length * 4 + 2;
+
+  // Meta line
+  doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...c.dim);
+  let meta = formatDatetime(entry.datetime);
+  if (entry.category) meta += '  |  ' + entry.category;
+  if (entry.responsible) meta += '  |  ' + entry.responsible;
+  doc.text(meta, margin + 6, y + 3);
+
+  // Status + severity badges
+  const statCol = statusColor(entry.status);
+  const statusLabel = (entry.status || 'open').toUpperCase();
+  const sevLabel = (entry.severity || 'low').toUpperCase();
+  const badgeX = w - margin - 40;
+  doc.setFillColor(...statCol[0] !== undefined ? statCol : [136,136,160]);
+  doc.setFontSize(5.5); doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...statCol); doc.text(statusLabel, badgeX, y + 3);
+  doc.setTextColor(...sevCol); doc.text(sevLabel, badgeX + 22, y + 3);
+  y += 7;
+
+  // Sections
+  const sections = [
+    ['ISSUE OBSERVED', entry.issue],
+    ['CORRECTION APPLIED', entry.correction],
+    ['PREVENTIVE SOLUTION', entry.preventive],
+  ];
+
+  for (const [label, text] of sections) {
+    if (!text) continue;
+    if (y > 270) {
+      doc.addPage();
+      doc.setFillColor(...c.bg); doc.rect(0, 0, w, doc.internal.pageSize.getHeight(), 'F');
+      y = 12;
+    }
+    doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...c.gold);
+    doc.text(label, margin + 6, y + 3);
+    y += 5;
+    doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(...c.text);
+    const lines = doc.splitTextToSize(text, innerW - 10);
+    doc.text(lines, margin + 6, y + 3);
+    y += lines.length * 3.2 + 2;
+  }
+
+  // Extend accent bar
+  doc.setFillColor(...sevCol);
+  doc.rect(margin, cardStart, 2, y - cardStart, 'F');
+
+  // Divider
+  y += 3;
+  doc.setDrawColor(...c.border); doc.setLineWidth(0.2);
+  doc.line(margin, y, w - margin, y);
+  y += 6;
+
+  return y;
+}
+
+function exportEntryPDF(id) {
+  const entry = getEntries().find(x => x.id === id);
+  if (!entry) return;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const c = pdfColors();
+  const w = doc.internal.pageSize.getWidth();
+  const h = doc.internal.pageSize.getHeight();
+
+  // Dark background
+  doc.setFillColor(...c.bg);
+  doc.rect(0, 0, w, h, 'F');
+
+  let y = addPdfHeader(doc, 'Entry Detail', formatDatetime(entry.datetime));
+  y = addPdfEntry(doc, entry, y);
+
+  // Footer
+  doc.setFontSize(5.5); doc.setTextColor(...c.dim);
+  doc.text('Corrections & Solutions  |  Generated ' + new Date().toLocaleString(), 12, h - 8);
+
+  doc.save(`correction-${entry.id}.pdf`);
+}
+
+function exportAllPDF() {
+  const entries = getEntries();
+  if (!entries.length) { alert('No entries to export.'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const c = pdfColors();
+  const w = doc.internal.pageSize.getWidth();
+  const h = doc.internal.pageSize.getHeight();
+
+  doc.setFillColor(...c.bg);
+  doc.rect(0, 0, w, h, 'F');
+
+  let y = addPdfHeader(doc, 'Full Corrections Log', entries.length + ' entries  |  ' + new Date().toLocaleDateString());
+
+  const sorted = [...entries].sort((a, b) => (b.datetime || '').localeCompare(a.datetime || ''));
+  for (const entry of sorted) {
+    if (y > 255) {
+      doc.addPage();
+      doc.setFillColor(...c.bg); doc.rect(0, 0, w, h, 'F');
+      y = 12;
+    }
+    y = addPdfEntry(doc, entry, y);
+  }
+
+  doc.setFontSize(5.5); doc.setTextColor(...c.dim);
+  doc.text('Corrections & Solutions  |  Generated ' + new Date().toLocaleString(), 12, h - 8);
+
+  doc.save(`corrections-log-${dateStr(new Date())}.pdf`);
+}
+
+function exportWeeklyPDF() {
+  const startVal = document.getElementById('weekStart').value;
+  const endVal = document.getElementById('weekEnd').value;
+  if (!startVal || !endVal) { alert('Select a date range.'); return; }
+
+  const start = new Date(startVal + 'T00:00:00');
+  const end = new Date(endVal + 'T23:59:59');
+
+  const entries = getEntries().filter(e => {
+    if (!e.datetime) return false;
+    const d = new Date(e.datetime);
+    return d >= start && d <= end;
+  }).sort((a, b) => (a.datetime || '').localeCompare(b.datetime || ''));
+
+  if (!entries.length) { alert('No entries found in this date range.'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const c = pdfColors();
+  const w = doc.internal.pageSize.getWidth();
+  const h = doc.internal.pageSize.getHeight();
+
+  doc.setFillColor(...c.bg);
+  doc.rect(0, 0, w, h, 'F');
+
+  const rangeStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+    ' - ' + end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  let y = addPdfHeader(doc, 'Weekly Summary', rangeStr + '  |  ' + entries.length + ' entries');
+
+  // Summary stats
+  const bySev = { low: 0, moderate: 0, high: 0 };
+  const byStatus = { open: 0, 'in-progress': 0, resolved: 0, closed: 0 };
+  const byCat = {};
+  entries.forEach(e => {
+    bySev[e.severity || 'low']++;
+    byStatus[e.status || 'open']++;
+    const cat = e.category || 'Other';
+    byCat[cat] = (byCat[cat] || 0) + 1;
+  });
+
+  // Stats boxes
+  doc.setFillColor(...c.surface);
+  const boxW = (w - 36) / 4;
+  const stats = [
+    [entries.length.toString(), 'TOTAL', c.gold],
+    [bySev.high.toString(), 'HIGH', c.red],
+    [byStatus.resolved.toString(), 'RESOLVED', c.green],
+    [byStatus.open.toString(), 'OPEN', c.blue],
+  ];
+  stats.forEach(([num, label, col], i) => {
+    const bx = 12 + i * (boxW + 4);
+    doc.setFillColor(...c.surface);
+    doc.roundedRect(bx, y, boxW, 16, 2, 2, 'F');
+    doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(...col);
+    doc.text(num, bx + boxW / 2, y + 8, { align: 'center' });
+    doc.setFontSize(5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...c.dim);
+    doc.text(label, bx + boxW / 2, y + 13, { align: 'center' });
+  });
+  y += 22;
+
+  // Category breakdown
+  const catEntries = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+  if (catEntries.length) {
+    doc.setFontSize(6); doc.setFont('helvetica', 'bold'); doc.setTextColor(...c.gold);
+    doc.text('CATEGORIES', 12, y + 3);
+    y += 6;
+    catEntries.forEach(([cat, count]) => {
+      doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...c.text);
+      doc.text(cat, 14, y + 3);
+      doc.setTextColor(...c.dim); doc.text(count.toString(), w - 14, y + 3, { align: 'right' });
+      y += 4.5;
+    });
+    y += 4;
+  }
+
+  // Divider
+  doc.setDrawColor(...c.gold); doc.setLineWidth(0.3);
+  doc.line(12, y, w - 12, y);
+  y += 6;
+
+  // Entries
+  for (const entry of entries) {
+    if (y > 255) {
+      doc.addPage();
+      doc.setFillColor(...c.bg); doc.rect(0, 0, w, h, 'F');
+      y = 12;
+    }
+    y = addPdfEntry(doc, entry, y);
+  }
+
+  doc.setFontSize(5.5); doc.setTextColor(...c.dim);
+  doc.text('Corrections & Solutions  |  Weekly Summary  |  Generated ' + new Date().toLocaleString(), 12, h - 8);
+
+  doc.save(`corrections-weekly-${startVal}-to-${endVal}.pdf`);
+}
+
+// ── Service Worker ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// ── Init ──
+resetForm();
+renderLog();
+renderStats();
+updateCount();
+apiSync();
+</script>
+
+</body>
+</html>

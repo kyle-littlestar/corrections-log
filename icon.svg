@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="76" fill="#0f0f1a"/>
+  <path d="M170 245 L230 305 L355 180" fill="none" stroke="#d4a843" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="256" y="390" text-anchor="middle" font-family="Courier New,monospace" font-weight="bold" font-size="82" fill="#d4a843">C&amp;S</text>
+  <text x="256" y="435" text-anchor="middle" font-family="Courier New,monospace" font-size="30" fill="#8888a0">CORRECTIONS</text>
+</svg>
