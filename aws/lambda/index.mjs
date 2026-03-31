@@ -11,22 +11,30 @@ const client = new DynamoDBClient({});
 const ddb = DynamoDBDocumentClient.from(client);
 
 const TABLE = process.env.TABLE_NAME || "corrections-log-entries";
-const USER_ID = "default"; // fixed user for now; swap for auth later
 
-const headers = {
+const CORS_HEADERS = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type,X-User-Id",
 };
 
 function response(statusCode, body) {
-  return { statusCode, headers, body: JSON.stringify(body) };
+  return { statusCode, headers: CORS_HEADERS, body: JSON.stringify(body) };
+}
+
+function getUserId(event) {
+  return event.headers?.["x-user-id"] || event.headers?.["X-User-Id"] || "";
 }
 
 export const handler = async (event) => {
   const method = event.requestContext?.http?.method || event.httpMethod;
   const path = event.rawPath || event.path || "";
+
+  if (method === "OPTIONS") return response(200, {});
+
+  const userId = getUserId(event);
+  if (!userId) return response(401, { error: "Missing X-User-Id header" });
 
   // Extract ID from path: /entries/{id}
   const pathParts = path.replace(/^\//, "").split("/");
@@ -34,22 +42,19 @@ export const handler = async (event) => {
 
   try {
     switch (method) {
-      case "OPTIONS":
-        return response(200, {});
-
       case "GET":
-        return await getEntries();
+        return await getEntries(userId);
 
       case "POST":
-        return await createEntry(JSON.parse(event.body));
+        return await createEntry(userId, JSON.parse(event.body));
 
       case "PUT":
         if (!entryId) return response(400, { error: "Missing entry ID" });
-        return await updateEntry(entryId, JSON.parse(event.body));
+        return await updateEntry(userId, entryId, JSON.parse(event.body));
 
       case "DELETE":
         if (!entryId) return response(400, { error: "Missing entry ID" });
-        return await deleteEntry(entryId);
+        return await deleteEntry(userId, entryId);
 
       default:
         return response(405, { error: `Method ${method} not allowed` });
@@ -61,25 +66,25 @@ export const handler = async (event) => {
 };
 
 // ── GET /entries — return all entries for this user ──
-async function getEntries() {
+async function getEntries(userId) {
   const result = await ddb.send(
     new QueryCommand({
       TableName: TABLE,
       KeyConditionExpression: "userId = :uid",
-      ExpressionAttributeValues: { ":uid": USER_ID },
+      ExpressionAttributeValues: { ":uid": userId },
     })
   );
   return response(200, result.Items || []);
 }
 
 // ── POST /entries — create a new entry ──
-async function createEntry(body) {
+async function createEntry(userId, body) {
   if (!body || !body.id) {
     return response(400, { error: "Request body must include 'id'" });
   }
 
   const item = {
-    userId: USER_ID,
+    userId,
     ...body,
     createdAt: body.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -90,7 +95,7 @@ async function createEntry(body) {
 }
 
 // ── PUT /entries/{id} — update an existing entry ──
-async function updateEntry(id, body) {
+async function updateEntry(userId, id, body) {
   if (!body || Object.keys(body).length === 0) {
     return response(400, { error: "Request body cannot be empty" });
   }
@@ -120,7 +125,7 @@ async function updateEntry(id, body) {
   const result = await ddb.send(
     new UpdateCommand({
       TableName: TABLE,
-      Key: { userId: USER_ID, id },
+      Key: { userId, id },
       UpdateExpression: `SET ${exprParts.join(", ")}`,
       ExpressionAttributeNames: exprNames,
       ExpressionAttributeValues: exprValues,
@@ -132,11 +137,11 @@ async function updateEntry(id, body) {
 }
 
 // ── DELETE /entries/{id} — remove an entry ──
-async function deleteEntry(id) {
+async function deleteEntry(userId, id) {
   await ddb.send(
     new DeleteCommand({
       TableName: TABLE,
-      Key: { userId: USER_ID, id },
+      Key: { userId, id },
     })
   );
   return response(200, { deleted: id });

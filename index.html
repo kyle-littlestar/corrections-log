@@ -293,7 +293,7 @@
 <header>
   <div class="brand">
     <h1>CORRECTIONS &amp; SOLUTIONS</h1>
-    <p>Workplace Issue Tracker &middot; v1.2</p>
+    <p>Workplace Issue Tracker &middot; v1.3</p>
   </div>
   <div class="header-actions">
     <span class="badge" id="entryCount">0 entries</span>
@@ -412,6 +412,18 @@
 
 </div>
 
+<!-- Auth Modal -->
+<div class="modal-overlay active" id="authModal" style="z-index:200;">
+  <div class="modal">
+    <h3>Enter Your Passphrase</h3>
+    <p>This keeps your logs private. Only someone with this exact passphrase can see your entries. Save it somewhere — you'll need it on each new device.</p>
+    <input type="password" id="authInput" placeholder="Your secret passphrase" style="margin-bottom:12px;">
+    <div class="modal-actions">
+      <button class="btn-sm" onclick="setPassphrase()" style="background:var(--gold);color:var(--bg);padding:8px 16px;border:none;font-weight:700;">Continue</button>
+    </div>
+  </div>
+</div>
+
 <!-- Delete Modal -->
 <div class="modal-overlay" id="deleteModal">
   <div class="modal">
@@ -428,8 +440,34 @@
 // ── Config ──
 const API_BASE = 'https://nw06vrpvsl.execute-api.us-east-1.amazonaws.com';
 const STORAGE_KEY = 'corrections_log';
+const AUTH_KEY = 'corrections_user_id';
 let _cached = null;
 let _apiOk = !!API_BASE;
+let _userId = localStorage.getItem(AUTH_KEY) || '';
+
+// ── Auth ──
+async function hashPassphrase(phrase) {
+  const data = new TextEncoder().encode(phrase.trim());
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function setPassphrase() {
+  const input = document.getElementById('authInput');
+  const phrase = input.value.trim();
+  if (!phrase) { input.focus(); return; }
+  _userId = await hashPassphrase(phrase);
+  localStorage.setItem(AUTH_KEY, _userId);
+  document.getElementById('authModal').classList.remove('active');
+  _cached = null;
+  apiSync();
+}
+
+function checkAuth() {
+  if (_userId) {
+    document.getElementById('authModal').classList.remove('active');
+  }
+}
 
 // ── Storage ──
 function getEntries() {
@@ -446,7 +484,11 @@ function generateId() { return Date.now().toString(36) + Math.random().toString(
 
 // ── API helpers ──
 async function apiFetch(path, opts = {}) {
-  const r = await fetch(`${API_BASE}${path}`, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  if (!_userId) return;
+  const r = await fetch(`${API_BASE}${path}`, {
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': _userId },
+    ...opts,
+  });
   if (!r.ok) throw new Error(`API ${r.status}`);
   return r.json();
 }
@@ -1023,6 +1065,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ── Init ──
+checkAuth();
 resetForm();
 renderLog();
 renderStats();
