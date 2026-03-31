@@ -10,7 +10,6 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <title>Corrections &amp; Solutions</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -728,6 +727,17 @@ function renderStats() {
 // ── PDF Generation ──
 function dateStr(d) { return d.toISOString().slice(0, 10); }
 
+async function loadJsPDF() {
+  if (window.jspdf) return window.jspdf.jsPDF;
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js';
+    s.onload = () => resolve(window.jspdf.jsPDF);
+    s.onerror = () => reject(new Error('Failed to load jsPDF'));
+    document.head.appendChild(s);
+  });
+}
+
 function pdfColors() {
   return {
     bg: [15, 15, 26], surface: [26, 26, 46], border: [46, 46, 72],
@@ -852,11 +862,11 @@ function addPdfEntry(doc, entry, y) {
   return y;
 }
 
-function exportEntryPDF(id) {
+async function exportEntryPDF(id) {
   const entry = getEntries().find(x => x.id === id);
   if (!entry) return;
 
-  const { jsPDF } = window.jspdf;
+  const jsPDF = await loadJsPDF();
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const c = pdfColors();
   const w = doc.internal.pageSize.getWidth();
@@ -876,11 +886,11 @@ function exportEntryPDF(id) {
   doc.save(`correction-${entry.id}.pdf`);
 }
 
-function exportAllPDF() {
+async function exportAllPDF() {
   const entries = getEntries();
   if (!entries.length) { alert('No entries to export.'); return; }
 
-  const { jsPDF } = window.jspdf;
+  const jsPDF = await loadJsPDF();
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const c = pdfColors();
   const w = doc.internal.pageSize.getWidth();
@@ -907,7 +917,7 @@ function exportAllPDF() {
   doc.save(`corrections-log-${dateStr(new Date())}.pdf`);
 }
 
-function exportWeeklyPDF() {
+async function exportWeeklyPDF() {
   const startVal = document.getElementById('weekStart').value;
   const endVal = document.getElementById('weekEnd').value;
   if (!startVal || !endVal) { alert('Select a date range.'); return; }
@@ -923,7 +933,7 @@ function exportWeeklyPDF() {
 
   if (!entries.length) { alert('No entries found in this date range.'); return; }
 
-  const { jsPDF } = window.jspdf;
+  const jsPDF = await loadJsPDF();
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const c = pdfColors();
   const w = doc.internal.pageSize.getWidth();
