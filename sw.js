@@ -1,4 +1,4 @@
-const CACHE_NAME = 'corrections-log-v3';
+const CACHE_NAME = 'corrections-log-v4';
 const ASSETS = [
   './',
   './index.html',
