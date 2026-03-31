@@ -119,15 +119,16 @@
   input::placeholder, textarea::placeholder { color: var(--text-dim); opacity: 0.6; }
 
   /* Severity pills */
-  .severity-pills { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .severity-pills { display: flex; gap: 8px; }
   .sev-pill {
-    text-align: center; padding: 10px 8px;
+    flex: 1; text-align: center; padding: 10px 8px; height: 42px;
     font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600;
     background: var(--surface2); color: var(--text-dim);
     border: 1px solid var(--border); border-radius: var(--radius);
     cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
   }
-  .sev-pill input { position: absolute; opacity: 0; pointer-events: none; }
+  .sev-pill input { display: none; }
   .sev-pill.selected-low { border-color: var(--green); color: var(--green); background: rgba(52,211,153,0.08); }
   .sev-pill.selected-moderate { border-color: var(--amber); color: var(--amber); background: rgba(251,191,36,0.08); }
   .sev-pill.selected-high { border-color: var(--red); color: var(--red); background: rgba(248,113,113,0.08); }
@@ -343,15 +344,9 @@
 
       <label>Severity</label>
       <div class="severity-pills" id="severityPills">
-        <label class="sev-pill" onclick="selectSeverity(this,'low')">
-          <input type="radio" name="severity" value="low"> Low
-        </label>
-        <label class="sev-pill" onclick="selectSeverity(this,'moderate')">
-          <input type="radio" name="severity" value="moderate"> Moderate
-        </label>
-        <label class="sev-pill" onclick="selectSeverity(this,'high')">
-          <input type="radio" name="severity" value="high"> High
-        </label>
+        <label class="sev-pill" onclick="selectSeverity(this,'low')"><input type="radio" name="severity" value="low"><span>Low</span></label>
+        <label class="sev-pill" onclick="selectSeverity(this,'moderate')"><input type="radio" name="severity" value="moderate"><span>Moderate</span></label>
+        <label class="sev-pill" onclick="selectSeverity(this,'high')"><input type="radio" name="severity" value="high"><span>High</span></label>
       </div>
 
       <label>Issue Observed</label>
