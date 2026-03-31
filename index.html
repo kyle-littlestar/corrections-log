@@ -90,12 +90,14 @@
   .view.active { display: block; }
 
   /* ── Form ── */
-  label {
+  .view > form > label,
+  .view > .card > label {
     display: block; font-family: var(--font-mono); font-size: 0.7rem;
     font-weight: 700; color: var(--gold-dim); letter-spacing: 0.8px;
     text-transform: uppercase; margin-bottom: 6px; margin-top: 18px;
   }
-  label:first-child { margin-top: 0; }
+  .view > form > label:first-child,
+  .view > .card > label:first-child { margin-top: 0; }
 
   input, textarea, select {
     width: 100%; padding: 12px 14px;
@@ -121,7 +123,7 @@
   /* Severity pills */
   .severity-pills { display: flex; gap: 8px; }
   .sev-pill {
-    flex: 1; text-align: center; padding: 10px 8px; height: 42px;
+    flex: 1; text-align: center; padding: 10px 8px;
     font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600;
     background: var(--surface2); color: var(--text-dim);
     border: 1px solid var(--border); border-radius: var(--radius);
